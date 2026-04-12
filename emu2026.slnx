@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="emu2026.csproj">
+    <Platform Solution="Release|*" Project="x64" />
+  </Project>
+</Solution>

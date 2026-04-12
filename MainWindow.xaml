@@ -1,0 +1,442 @@
+﻿<Window x:Class="emu2026.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="VORTEX PRO" Height="750" Width="950"
+        Background="#181818" Foreground="White"
+        WindowStyle="None" ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterScreen"
+        MouseLeftButtonDown="Window_MouseDown"
+        PreviewMouseDown="Window_PreviewMouseDown"
+        Closing="Window_Closing"
+        Loaded="Window_Loaded">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="5" GlassFrameThickness="0" CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <LinearGradientBrush x:Key="AccentColor" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFC107" Offset="0.0"/>
+            <GradientStop Color="#FF555555" Offset="1.0"/>
+        </LinearGradientBrush>
+        <SolidColorBrush x:Key="PanelColor" Color="#252525"/>
+
+        <Style x:Key="OverlayBindStyle" TargetType="Button">
+            <Setter Property="Background" Value="#CC202020"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#666"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Width" Value="60"/>
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bdr" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Margin="-2,-30,0,30" RenderTransformOrigin="0.518,0.559">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bdr" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                <Setter TargetName="bdr" Property="Background" Value="#E6101010"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bdr" Property="Background" Value="{DynamicResource AccentColor}"/>
+                                <Setter Property="Foreground" Value="Black"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="Btn_DragStart"/>
+            <EventSetter Event="PreviewMouseMove" Handler="Btn_DragMove"/>
+            <EventSetter Event="PreviewMouseLeftButtonUp" Handler="Btn_DragEnd"/>
+        </Style>
+
+        <Style x:Key="ListBindBtn" TargetType="Button" BasedOn="{StaticResource OverlayBindStyle}">
+            <Setter Property="Width" Value="80"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bdr" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bdr" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                <Setter TargetName="bdr" Property="Background" Value="#E6101010"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bdr" Property="Background" Value="{DynamicResource AccentColor}"/>
+                                <Setter Property="Foreground" Value="Black"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="NavBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#888"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Width" Value="100"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bdr" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="0,0,0,3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="Selected">
+                                <Setter TargetName="bdr" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#333"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="Slider">
+            <Setter Property="IsSnapToTickEnabled" Value="True"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="TickFrequency" Value="0.1"/>
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,2"/>
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="#333" BorderThickness="1" Background="#121212">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
+
+            <TabControl x:Name="MainTabs" Grid.Row="1" Background="Transparent" BorderThickness="0" SelectedIndex="0">
+                <TabControl.ItemContainerStyle>
+                    <Style TargetType="{x:Type TabItem}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </Style>
+                </TabControl.ItemContainerStyle>
+
+                <TabItem>
+                    <Grid>
+                        <Viewbox Margin="20,0,20,50">
+                            <Grid Width="800" Height="500">
+                                <Image Source="controller.png" Opacity="0.9" Stretch="Uniform" Width="800" Height="500" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Canvas x:Name="OverlayCanvas" Width="800" Height="500">
+                                    <Button x:Name="btnLT" Content="Aim" Canvas.Left="215" Canvas.Top="66" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyAim"/>
+                                    <Button x:Name="btnRT" Content="Fire" Canvas.Left="512" Canvas.Top="67" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyShoot"/>
+                                    <Button x:Name="btnLB" Content="Q" Canvas.Left="263" Canvas.Top="98" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyTactical"/>
+                                    <Button x:Name="btnRB" Content="E" Canvas.Left="466" Canvas.Top="98" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyLethal"/>
+                                    <Button x:Name="btnView" Content="M" Canvas.Left="333" Canvas.Top="167" Width="40" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyMap"/>
+                                    <Button x:Name="btnMenu" Content="ESC" Canvas.Left="421" Canvas.Top="167" Width="40" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyMenu"/>
+                                    <Button x:Name="btnY" Content="1" Canvas.Left="532" Canvas.Top="127" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeySwap" Height="25" Width="40"/>
+                                    <Button x:Name="btnX" Content="R" Canvas.Left="494" Canvas.Top="167" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyReload" Height="25" Width="40"/>
+                                    <Button x:Name="btnB" Content="C" Canvas.Left="573" Canvas.Top="167" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyCrouch" Width="40" Height="25"/>
+                                    <Button x:Name="btnA" Content="Space" Canvas.Left="529" Canvas.Top="207" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyJump" Height="25" Width="50"/>
+                                    <Button x:Name="btnUp" Content="Ping" Canvas.Left="302" Canvas.Top="229" Width="50" Height="20" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyPing"/>
+                                    <Button x:Name="btnLeft" Content="B" Canvas.Left="269" Canvas.Top="261" Width="40" Height="20" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyFireMode"/>
+                                    <Button x:Name="btnRight" Content="3" Canvas.Left="308" Canvas.Top="300" Width="40" Height="20" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyKillstreak"/>
+                                    <Button x:Name="btnDown" Content="Tab" Canvas.Left="340" Canvas.Top="264" Width="50" Height="20" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyBackpack"/>
+                                    <Button x:Name="btnLS" Content="L-Shift" Canvas.Left="220" Canvas.Top="169" Width="70" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeySprint"/>
+                                    <Button x:Name="btnRS" Content="V" Canvas.Left="444" Canvas.Top="251" Style="{StaticResource OverlayBindStyle}" Click="Bind_Click" Tag="KeyMelee"/>
+                                </Canvas>
+                            </Grid>
+                        </Viewbox>
+                        <Grid VerticalAlignment="Bottom" Margin="20,0,20,10">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <CheckBox x:Name="chkEditMode" Content="MOVE UI MODE" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                <Button Content="APPLY CONFIG" Width="150" Height="40" Background="{DynamicResource AccentColor}" Foreground="Black" FontWeight="ExtraBold" FontSize="14" Click="Save_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+
+                <TabItem>
+                    <ScrollViewer Margin="20">
+                        <StackPanel MaxWidth="400">
+                            <TextBlock Text="KEY BINDINGS LIST" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" FontSize="16" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+                            <Border Background="{StaticResource PanelColor}" CornerRadius="8" Padding="20">
+                                <StackPanel>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Parachute / High Sens (Hold)" VerticalAlignment="Center" Foreground="{DynamicResource AccentColor}"/>
+                                        <Button x:Name="lstParachute" Content="Alt" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyParachute"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Lock/Unlock Mouse Toggle" VerticalAlignment="Center" Foreground="{DynamicResource AccentColor}"/>
+                                        <Button x:Name="lstEmuToggle" Content="Home" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyEmulatorToggle"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Shoot (RT)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstRT" Content="Fire" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyShoot"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Aim (LT)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstLT" Content="Aim" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyAim"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Tactical (LB)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstLB" Content="Q" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyTactical"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Lethal (RB)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstRB" Content="E" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyLethal"/>
+                                    </Grid>
+                                    <Separator Background="#444" Margin="0,10"/>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Jump (A)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstA" Content="Space" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyJump"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Crouch (B)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstB" Content="C" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyCrouch"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Reload (X)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstX" Content="R" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyReload"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Swap (Y)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstY" Content="1" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeySwap"/>
+                                    </Grid>
+                                    <Separator Background="#444" Margin="0,10"/>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Sprint (LS)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstLS" Content="Shift" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeySprint"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Melee (RS)" VerticalAlignment="Center"/>
+                                        <Button x:Name="lstRS" Content="V" Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyMelee"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="YY Macro" VerticalAlignment="Center" Foreground="{DynamicResource AccentColor}"/>
+                                        <Button x:Name="lstYY" Content="..." Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyYY"/>
+                                    </Grid>
+                                    <Grid Margin="0,4">
+                                        <TextBlock Text="Drop All Money" VerticalAlignment="Center" Foreground="{DynamicResource AccentColor}"/>
+                                        <Button x:Name="lstDropMoney" Content="..." Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyDropAllMoney"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem>
+                    <ScrollViewer Margin="20">
+                        <StackPanel MaxWidth="500">
+                            <Border Background="{StaticResource PanelColor}" CornerRadius="8" Padding="20">
+                                <StackPanel>
+                                    <TextBlock Text="MOUSE ENGINE" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" FontSize="16" Margin="0,0,0,20"/>
+                                    <Grid Margin="0,10">
+                                        <TextBlock Text="Sensitivity"/>
+                                        <TextBox x:Name="txtSens" Text="3.0" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldSens" Minimum="0.1" Maximum="20.0" Value="3.0" ValueChanged="Slider_Changed"/>
+                                    <Grid Margin="0,10">
+                                        <TextBlock Text="Y-Ratio"/>
+                                        <TextBox x:Name="txtYRatio" Text="2.0" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldYRatio" Minimum="0.5" Maximum="5.0" Value="2.0" ValueChanged="Slider_Changed"/>
+                                    <Grid Margin="0,10">
+                                        <TextBlock Text="Response Curve"/>
+                                        <TextBox x:Name="txtCurve" Text="1.5" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldCurve" Minimum="1.0" Maximum="5.0" Value="1.5" ValueChanged="Slider_Changed"/>
+                                    <Grid Margin="0,10">
+                                        <TextBlock Text="Smoothing"/>
+                                        <TextBox x:Name="txtSmooth" Text="0.08" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldSmooth" Minimum="0.0" Maximum="0.9" Value="0.08" TickFrequency="0.01" ValueChanged="Slider_Changed"/>
+                                    <Separator Background="#444" Margin="0,15,0,10"/>
+                                    <TextBlock Text="PARACHUTE MULTIPLIER" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                    <Grid Margin="0,10">
+                                        <TextBlock Text="Multiplier (x)"/>
+                                        <TextBox x:Name="txtParaMult" Text="2.5" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldParaMult" Minimum="1.0" Maximum="10.0" Value="2.5" ValueChanged="Slider_Changed"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="10">
+                        <WrapPanel HorizontalAlignment="Center">
+                            <Border Background="{StaticResource PanelColor}" CornerRadius="8" Padding="15" Margin="5" Width="250">
+                                <StackPanel>
+                                    <TextBlock Text="COMBAT &amp; UTILITY" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" Margin="0,0,0,10"/>
+                                    <CheckBox x:Name="chkRapidFire" Content="Rapid Fire" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                    <CheckBox x:Name="chkAutoPing" Content="Auto Ping on Fire" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                    <CheckBox x:Name="chkSounds" Content="Sound Alerts" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                    <Grid Margin="0,5">
+                                        <TextBlock Text="Rapid Delay"/>
+                                        <TextBox x:Name="txtRapidDelay" Text="50" Width="40" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldRapidDelay" Minimum="10" Maximum="500" Value="50" ValueChanged="Slider_Changed"/>
+                                    <Grid Margin="0,5">
+                                        <TextBlock Text="Anti-Recoil"/>
+                                        <TextBox x:Name="txtRecoil" Text="28" Width="40" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldRecoil" Minimum="0" Maximum="100" Value="28" ValueChanged="Slider_Changed"/>
+                                    <Separator Background="#444" Margin="0,10"/>
+                                    <TextBlock Text="ROTATIONAL ASSIST" FontWeight="Bold" Margin="0,0,0,5" Foreground="#DDD"/>
+                                    <CheckBox x:Name="chkRotational" Content="Enable Shake" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                    <Grid Margin="0,5">
+                                        <TextBlock Text="Speed (ms):"/>
+                                        <TextBox x:Name="txtRotTime" Text="50" Width="40" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldRotTime" Minimum="1" Maximum="200" Value="50" ValueChanged="Slider_Changed"/>
+                                    <Grid Margin="0,5">
+                                        <TextBlock Text="Intensity:"/>
+                                        <TextBox x:Name="txtRotStr" Text="5" Width="40" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldRotStr" Minimum="1" Maximum="50" Value="5" ValueChanged="Slider_Changed"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{StaticResource PanelColor}" CornerRadius="8" Padding="15" Margin="5" Width="250">
+                                <StackPanel>
+                                    <TextBlock Text="DROP ALL MONEY" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" Margin="0,0,0,10"/>
+                                    <Grid Margin="0,5">
+                                        <TextBlock Text="Open Delay"/>
+                                        <TextBox x:Name="txtDropMoneyOpenDelay" Text="180" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldDropMoneyOpenDelay" Minimum="50" Maximum="500" Value="180" ValueChanged="Slider_Changed"/>
+                                    <Grid Margin="0,5">
+                                        <TextBlock Text="Action Delay"/>
+                                        <TextBox x:Name="txtDropMoneyActionDelay" Text="120" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldDropMoneyActionDelay" Minimum="50" Maximum="500" Value="120" ValueChanged="Slider_Changed"/>
+                                    <Grid Margin="0,5">
+                                        <TextBlock Text="Close Delay"/>
+                                        <TextBox x:Name="txtDropMoneyCloseDelay" Text="140" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
+                                    </Grid>
+                                    <Slider x:Name="sldDropMoneyCloseDelay" Minimum="50" Maximum="500" Value="140" ValueChanged="Slider_Changed"/>
+                                    <TextBlock Text="Sequence: D-Pad Down -> Y -> B" Foreground="#AFAFAF" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </WrapPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem>
+                    <Grid Margin="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="200"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Background="{StaticResource PanelColor}" CornerRadius="8" Padding="10">
+                            <DockPanel>
+                                <TextBlock Text="SAVED PROFILES" DockPanel.Dock="Top" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <ListBox x:Name="lstProfiles" Background="Transparent" BorderThickness="0" Foreground="White" FontSize="14" SelectionChanged="LstProfiles_SelectionChanged"/>
+                            </DockPanel>
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                            <Button x:Name="btnNewProfile" Content="CREATE NEW" Height="40" Margin="0,0,0,10" Background="{DynamicResource AccentColor}" Foreground="Black" FontWeight="Bold" Click="BtnNewProfile_Click"/>
+                            <Button x:Name="btnSaveProfile" Content="SAVE CURRENT" Height="40" Background="#333" Foreground="White" FontWeight="Bold" Click="BtnSaveProfile_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+
+                <TabItem>
+                    <ScrollViewer Margin="20">
+                        <StackPanel MaxWidth="400">
+                            <TextBlock Text="THEME &amp; CUSTOMIZATION" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" FontSize="16" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+                            <Border Background="{StaticResource PanelColor}" CornerRadius="8" Padding="20">
+                                <StackPanel>
+                                    <TextBlock Text="Choose Your Accent Color" Foreground="White" Margin="0,0,0,10"/>
+                                    <WrapPanel Margin="0,10">
+                                        <Button Width="40" Height="40" Margin="5" Background="#FFC107" BorderThickness="0" Cursor="Hand" Click="ThemeBtn_Click" Tag="#FFC107"/>
+                                        <Button Width="40" Height="40" Margin="5" Background="#FF0055" BorderThickness="0" Cursor="Hand" Click="ThemeBtn_Click" Tag="#FF0055"/>
+                                        <Button Width="40" Height="40" Margin="5" Background="#00E676" BorderThickness="0" Cursor="Hand" Click="ThemeBtn_Click" Tag="#00E676"/>
+                                        <Button Width="40" Height="40" Margin="5" Background="#2979FF" BorderThickness="0" Cursor="Hand" Click="ThemeBtn_Click" Tag="#2979FF"/>
+                                        <Button Width="40" Height="40" Margin="5" Background="#D500F9" BorderThickness="0" Cursor="Hand" Click="ThemeBtn_Click" Tag="#D500F9"/>
+                                        <Button Width="40" Height="40" Margin="5" Background="#FF3D00" BorderThickness="0" Cursor="Hand" Click="ThemeBtn_Click" Tag="#FF3D00"/>
+                                        <Button Width="40" Height="40" Margin="5" Background="#00E5FF" BorderThickness="0" Cursor="Hand" Click="ThemeBtn_Click" Tag="#00E5FF"/>
+                                        <Button Width="40" Height="40" Margin="5" Background="#FFFFFF" BorderThickness="0" Cursor="Hand" Click="ThemeBtn_Click" Tag="#FFFFFF"/>
+                                    </WrapPanel>
+                                    <Grid Margin="0,20,0,0">
+                                        <TextBlock Text="Custom Hex:" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <TextBox x:Name="txtCustomThemeHex" Text="#FFC107" Width="80" TextChanged="CustomThemeHex_Changed"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem>
+                    <Grid Margin="20">
+                        <Border Background="{StaticResource PanelColor}" CornerRadius="12" Padding="35" MaxWidth="560" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel>
+                                <TextBlock Text="NEW FEATURES" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" FontSize="22" HorizontalAlignment="Center"/>
+                                <TextBlock Text="COMING SOON" Foreground="White" FontWeight="ExtraBold" FontSize="32" HorizontalAlignment="Center" Margin="0,12,0,20"/>
+                                <TextBlock Text="New Features Coming Soon. This reserved area builds curiosity for future premium updates and upcoming improvements." Foreground="#CFCFCF" FontSize="14" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,18"/>
+                                <Border Background="#1A1A1A" BorderBrush="#333" BorderThickness="1" CornerRadius="8" Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="What this means" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="This section is being reserved for the next wave of features and future product upgrades." Foreground="#B5B5B5" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                                        <TextBlock Text="Use the Update Log to preview what is rolling out next." Foreground="#B5B5B5" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <Grid Grid.Row="0" Background="#1E1E1E">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
+                    <TextBlock Text="VORTEX" FontWeight="Bold" Foreground="{DynamicResource AccentColor}" FontSize="16"/>
+                    <TextBlock Text=" | PRO" Foreground="#888" FontSize="14" Margin="5,2,0,0"/>
+                    <Border Background="#222" CornerRadius="4" Padding="8,2" Margin="15,0,0,0">
+                        <TextBlock x:Name="lblTimer" Text="Checking License..." Foreground="#00E676" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </Border>
+                    <Button Content="UPDATE LOG" Click="BtnUpdateLog_Click" Height="26" Width="110" Margin="14,0,0,0" Background="#262626" Foreground="White" BorderBrush="#3A3A3A" BorderThickness="1" FontWeight="Bold" FontSize="11"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,5,0" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Content="_" Click="Hide_Click" Width="40" Background="Transparent" Foreground="#AAA" BorderThickness="0"/>
+                    <Button Content="X" Click="Close_Click" Width="40" Background="Transparent" Foreground="#AAA" BorderThickness="0"/>
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="2" BorderBrush="#333" BorderThickness="0,1,0,0" Background="#151515">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button x:Name="navController" Content="CONTROLLER" Click="Nav_Controller_Click" Style="{StaticResource NavBtnStyle}" Tag="Selected"/>
+                    <Button x:Name="navBindings" Content="BINDINGS" Click="Nav_Bindings_Click" Style="{StaticResource NavBtnStyle}"/>
+                    <Button x:Name="navSettings" Content="SETTINGS" Click="Nav_Settings_Click" Style="{StaticResource NavBtnStyle}"/>
+                    <Button x:Name="navMacros" Content="MACROS" Click="Nav_Macro_Click" Style="{StaticResource NavBtnStyle}"/>
+                    <Button x:Name="navProfiles" Content="PROFILES" Click="Nav_Profiles_Click" Style="{StaticResource NavBtnStyle}"/>
+                    <Button x:Name="navThemes" Content="THEMES" Click="Nav_Themes_Click" Style="{StaticResource NavBtnStyle}"/>
+                    <Button x:Name="navIA" Content="NEW FEATURES" Click="Nav_IA_Click" Style="{StaticResource NavBtnStyle}" Width="150"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
