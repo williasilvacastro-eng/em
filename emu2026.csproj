@@ -9,12 +9,6 @@
 		<Platforms>AnyCPU;x64</Platforms>
 		<ApplicationIcon>vortex_icon.ico</ApplicationIcon>
 	</PropertyGroup>
-	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
-		<Optimize>true</Optimize>
-		<DebugType>none</DebugType>
-		<DebugSymbols>false</DebugSymbols>
-		<TieredCompilation>false</TieredCompilation>
-	</PropertyGroup>
 	<ItemGroup>
 	  <None Remove="controller.png" />
 	  <None Remove="vortex_icon.ico" />
@@ -39,4 +33,12 @@
 	  <Folder Include="bin\x64\Release\net8.0-windows\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="best.pt">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="convert_int8.py">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 </Project>

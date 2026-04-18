@@ -20,32 +20,15 @@
             <StackPanel x:Name="LoginPanel" VerticalAlignment="Center">
 
                 <TextBlock Text="VORTEX PRO" FontWeight="Bold" FontSize="24" Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                <TextBlock Text="Restricted Access - License Required" Foreground="#888" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                <Border Background="#1A1A1A" BorderBrush="#333" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
-                    <StackPanel>
-                        <TextBlock Text="New Features Coming Soon" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Stay tuned for future premium updates and new modules." Foreground="#AFAFAF" FontSize="11" HorizontalAlignment="Center" Margin="0,6,0,0"/>
-                    </StackPanel>
-                </Border>
-                <TextBlock x:Name="txtDependencyStatus" Text="Checking drivers before login..." Foreground="#AAA" FontSize="11" TextAlignment="Center" Margin="10,0,10,20" TextWrapping="Wrap"/>
+                <TextBlock Text="Restricted Access - License Required" Foreground="#888" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,30"/>
 
                 <TextBlock Text="Enter your License Key:" FontSize="11" Foreground="#AAA" Margin="0,0,0,5"/>
                 <TextBox x:Name="txtKey" Height="30" Background="#333" Foreground="White" BorderThickness="1" BorderBrush="#555" Padding="5" Margin="0,0,0,25" HorizontalContentAlignment="Center"/>
 
-                <Button x:Name="btnLogin" Content="VERIFY LICENSE &amp; LOGIN" Height="40" Background="{DynamicResource AccentColor}" Foreground="Black" FontWeight="Bold" Cursor="Hand" Click="BtnLogin_Click">
+                <Button Content="VERIFY LICENSE &amp; LOGIN" Height="40" Background="{DynamicResource AccentColor}" Foreground="Black" FontWeight="Bold" Cursor="Hand" Click="BtnLogin_Click">
                     <Button.Template>
                         <ControlTemplate TargetType="{x:Type Button}">
                             <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-
-                <Button Content="UPDATE LOG" Height="34" Background="#242424" Foreground="White" FontWeight="Bold" BorderBrush="#3A3A3A" BorderThickness="1" Cursor="Hand" Margin="0,12,0,0" Click="BtnUpdateLog_Click">
-                    <Button.Template>
-                        <ControlTemplate TargetType="{x:Type Button}">
-                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </ControlTemplate>
@@ -57,7 +40,7 @@
 
             <StackPanel x:Name="LoadingPanel" VerticalAlignment="Center" Visibility="Collapsed">
                 <TextBlock Text="VORTEX PRO" FontWeight="Bold" FontSize="24" Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                <TextBlock x:Name="txtLoadingStatus" Text="Preparing emulator dependencies..." Foreground="#888" FontSize="14" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                <TextBlock Text="Verifying saved license..." Foreground="#888" FontSize="14" HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>
     </Border>

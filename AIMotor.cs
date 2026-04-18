@@ -35,14 +35,56 @@ namespace emu2026
             if (stopWorker) return;
             try
             {
+                string finalModelPath = modelPath;
+                bool usingInt8 = false;
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string optimizedDir = Path.Combine(baseDir, "models opmized");
+
+                if (activeConfig.AI_Int8Enabled)
+                {
+                    string int8Name = Path.GetFileNameWithoutExtension(modelPath) + "_int8.onnx";
+                    string int8Path = Path.Combine(optimizedDir, int8Name);
+                    if (File.Exists(int8Path))
+                    {
+                        finalModelPath = int8Path;
+                        usingInt8 = true;
+                    }
+                    else
+                    {
+                        AILog.Log("INT8 ativado mas modelo _int8.onnx nao encontrado. Usando FP32.");
+                    }
+                }
+
+                AILog.Log("Carregando modelo: " + Path.GetFileName(finalModelPath) + "...");
+
                 SessionOptions options = new SessionOptions();
-                options.AppendExecutionProvider_DML(0);
                 options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
                 options.EnableMemoryPattern = true;
-                AILog.Log("Modelo: " + Path.GetFileName(modelPath));
+
+                string provider = activeConfig.AI_GpuProvider;
+                // Com Microsoft.ML.OnnxRuntime.DirectML, apenas DirectML está disponível.
+                // Para usar TensorRT ou CUDA, instale o pacote Microsoft.ML.OnnxRuntime.Gpu e adicione
+                // AppendExecutionProvider_TensorRT(0) ou AppendExecutionProvider_CUDA(0) respectivamente.
+                switch (provider)
+                {
+                    case "TensorRT":
+                        AILog.Log("GPU Provider: DirectML (TensorRT requer pacote separado, usando DirectML)");
+                        options.AppendExecutionProvider_DML(0);
+                        break;
+                    case "CUDA":
+                        AILog.Log("GPU Provider: DirectML (CUDA requer pacote separado, usando DirectML)");
+                        options.AppendExecutionProvider_DML(0);
+                        break;
+                    default:
+                        options.AppendExecutionProvider_DML(0);
+                        AILog.Log("GPU Provider: DirectML (Universal)");
+                        break;
+                }
+                AILog.Log("Precision: " + (usingInt8 ? "INT8" : "FP32"));
+
                 YoloPredictorOptions predictorOptions = new YoloPredictorOptions { SessionOptions = options };
-                using var predictor = new YoloPredictor(modelPath, predictorOptions);
-                AILog.Log("ONNX Runtime + DirectML ativo (GPU)");
+                using var predictor = new YoloPredictor(finalModelPath, predictorOptions);
+                AILog.Log("Modelo carregado com sucesso!");
                 int screenW = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
                 int screenH = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
                 int lastCaptureSize = 0;
@@ -60,6 +102,8 @@ namespace emu2026
                 const int maxLostFrames = 4;
 
                 AILog.Log("MODO LOCK: detectou = trava no alvo");
+                int initTargetFps = Math.Max(30, Math.Min(500, activeConfig.AI_TargetFps));
+                AILog.Log("IA pronta — rodando a ~" + initTargetFps + " FPS");
 
                 while (!stopWorker)
                 {
@@ -217,7 +261,9 @@ namespace emu2026
                     }
 
                     long elapsed = loopTimer.ElapsedMilliseconds;
-                    int sleep = 7 - (int)elapsed;
+                    int targetFps = Math.Max(30, Math.Min(500, activeConfig.AI_TargetFps));
+                    int targetMs = 1000 / targetFps;
+                    int sleep = targetMs - (int)elapsed;
                     if (sleep > 0) Thread.Sleep(sleep);
                 }
                 gDest?.Dispose();
@@ -235,11 +281,33 @@ namespace emu2026
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             if (!string.IsNullOrEmpty(requested))
             {
-                string fullPath = Path.IsPathRooted(requested) ? requested : Path.Combine(baseDir, requested);
-                if (File.Exists(fullPath)) return fullPath;
+                // Normaliza separadores
+                string normalized = requested.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+
+                // Se comeca com models/, resolve direto
+                if (normalized.StartsWith("models" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                {
+                    string fullPath = Path.Combine(baseDir, normalized);
+                    if (File.Exists(fullPath)) return fullPath;
+                }
+                // Tenta caminho absoluto
+                if (Path.IsPathRooted(normalized) && File.Exists(normalized)) return normalized;
+                // Tenta no diretorio raiz
+                string rootPath = Path.Combine(baseDir, Path.GetFileName(normalized));
+                if (File.Exists(rootPath)) return rootPath;
+                // Tenta na pasta models/
+                string modelsPath = Path.Combine(baseDir, "models", Path.GetFileName(normalized));
+                if (File.Exists(modelsPath)) return modelsPath;
             }
+            // Busca em baseDir, depois models/, depois subpastas
             var files = Directory.GetFiles(baseDir, "*.onnx");
             if (files.Length > 0) return files[0];
+            string modelsDir = Path.Combine(baseDir, "models");
+            if (Directory.Exists(modelsDir))
+            {
+                var modelFiles = Directory.GetFiles(modelsDir, "*.onnx");
+                if (modelFiles.Length > 0) return modelFiles[0];
+            }
             return null;
         }
         public void ShowVisionDebug()
@@ -289,14 +357,12 @@ namespace emu2026
             public static volatile int sharedDeltaY = 0;
             public static volatile bool rawLMB = false;
             public static volatile bool rawRMB = false;
-            public static volatile bool rawMMB = false;
-            public static volatile bool rawX1 = false;
-            public static volatile bool rawX2 = false;
             public static volatile bool EmulatorActive = false;
             public static System.Collections.Generic.Queue<Vector2Data> aimbotQueue = new System.Collections.Generic.Queue<Vector2Data>();
             public static object aimLock = new object();
             public static volatile int aimbotTrigger = 0;
             public static volatile int aimbotTimestamp = 0;
+
         }
 
         public static class AILog
@@ -388,6 +454,9 @@ namespace emu2026
         public int AntiRecoilRamp { get; set; } = 100;
         public double AI_AimForce { get; set; } = 1.0;
         public string AI_ModelPath { get; set; } = "best.onnx";
+        public string AI_GpuProvider { get; set; } = "DirectML";
+        public bool AI_Int8Enabled { get; set; } = false;
+        public int AI_TargetFps { get; set; } = 143;
         public int KeyEmulatorToggle { get; set; } = 0x24;
         public int KeyParachute { get; set; } = 0x12;
         public int KeyShoot { get; set; } = 0x01;
@@ -406,12 +475,6 @@ namespace emu2026
         public int KeyFireMode { get; set; } = 0x42;
         public int KeyMap { get; set; } = 0x4D;
         public int KeyMenu { get; set; } = 0x1B;
-        public int KeyDropAllMoney { get; set; } = 0;
-        public int DropAllMoneyActionKey { get; set; } = 0x47;
-        public int DropAllMoneyOpenDelayMs { get; set; } = 180;
-        public int DropAllMoneyActionDelayMs { get; set; } = 120;
-        public int DropAllMoneyCloseDelayMs { get; set; } = 140;
-        public int DropAllMoneyRepeatCount { get; set; } = 1;
         public Dictionary<string, System.Windows.Point> LayoutPositions { get; set; } = new Dictionary<string, System.Windows.Point>();
     }
 

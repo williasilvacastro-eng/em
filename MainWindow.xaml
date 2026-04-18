@@ -6,8 +6,6 @@
         WindowStyle="None" ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
         MouseLeftButtonDown="Window_MouseDown"
-        PreviewMouseDown="Window_PreviewMouseDown"
-        Closing="Window_Closing"
         Loaded="Window_Loaded">
 
     <WindowChrome.WindowChrome>
@@ -236,10 +234,6 @@
                                         <TextBlock Text="YY Macro" VerticalAlignment="Center" Foreground="{DynamicResource AccentColor}"/>
                                         <Button x:Name="lstYY" Content="..." Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyYY"/>
                                     </Grid>
-                                    <Grid Margin="0,4">
-                                        <TextBlock Text="Drop All Money" VerticalAlignment="Center" Foreground="{DynamicResource AccentColor}"/>
-                                        <Button x:Name="lstDropMoney" Content="..." Style="{StaticResource ListBindBtn}" Click="Bind_Click" Tag="KeyDropAllMoney"/>
-                                    </Grid>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -319,27 +313,6 @@
                                     <Slider x:Name="sldRotStr" Minimum="1" Maximum="50" Value="5" ValueChanged="Slider_Changed"/>
                                 </StackPanel>
                             </Border>
-                            <Border Background="{StaticResource PanelColor}" CornerRadius="8" Padding="15" Margin="5" Width="250">
-                                <StackPanel>
-                                    <TextBlock Text="DROP ALL MONEY" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" Margin="0,0,0,10"/>
-                                    <Grid Margin="0,5">
-                                        <TextBlock Text="Open Delay"/>
-                                        <TextBox x:Name="txtDropMoneyOpenDelay" Text="180" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
-                                    </Grid>
-                                    <Slider x:Name="sldDropMoneyOpenDelay" Minimum="50" Maximum="500" Value="180" ValueChanged="Slider_Changed"/>
-                                    <Grid Margin="0,5">
-                                        <TextBlock Text="Action Delay"/>
-                                        <TextBox x:Name="txtDropMoneyActionDelay" Text="120" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
-                                    </Grid>
-                                    <Slider x:Name="sldDropMoneyActionDelay" Minimum="50" Maximum="500" Value="120" ValueChanged="Slider_Changed"/>
-                                    <Grid Margin="0,5">
-                                        <TextBlock Text="Close Delay"/>
-                                        <TextBox x:Name="txtDropMoneyCloseDelay" Text="140" Width="60" HorizontalAlignment="Right" TextChanged="Setting_Changed"/>
-                                    </Grid>
-                                    <Slider x:Name="sldDropMoneyCloseDelay" Minimum="50" Maximum="500" Value="140" ValueChanged="Slider_Changed"/>
-                                    <TextBlock Text="Sequence: D-Pad Down -> Y -> B" Foreground="#AFAFAF" Margin="0,8,0,0" TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Border>
                         </WrapPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -392,22 +365,171 @@
                     </ScrollViewer>
                 </TabItem>
                 <TabItem>
-                    <Grid Margin="20">
-                        <Border Background="{StaticResource PanelColor}" CornerRadius="12" Padding="35" MaxWidth="560" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <StackPanel>
-                                <TextBlock Text="NEW FEATURES" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" FontSize="22" HorizontalAlignment="Center"/>
-                                <TextBlock Text="COMING SOON" Foreground="White" FontWeight="ExtraBold" FontSize="32" HorizontalAlignment="Center" Margin="0,12,0,20"/>
-                                <TextBlock Text="New Features Coming Soon. This reserved area builds curiosity for future premium updates and upcoming improvements." Foreground="#CFCFCF" FontSize="14" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,18"/>
-                                <Border Background="#1A1A1A" BorderBrush="#333" BorderThickness="1" CornerRadius="8" Padding="18">
-                                    <StackPanel>
-                                        <TextBlock Text="What this means" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="This section is being reserved for the next wave of features and future product upgrades." Foreground="#B5B5B5" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                                        <TextBlock Text="Use the Update Log to preview what is rolling out next." Foreground="#B5B5B5" TextWrapping="Wrap"/>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
+                    <ScrollViewer Margin="20">
+                        <StackPanel MaxWidth="500">
+                            <TextBlock Text="VORTEX AI ENGINE" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" FontSize="18" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+                            <Border Background="{StaticResource PanelColor}" CornerRadius="8" Padding="20">
+                                <StackPanel>
+
+                                    <!-- Tradução aqui -->
+                                    <CheckBox x:Name="chkAIEnable" Content="Enable AI Aimbot" FontWeight="Bold" Checked="Setting_Changed" Unchecked="Setting_Changed" Margin="0,0,0,10"/>
+                                    <CheckBox x:Name="chkMostrarCamera" Content="Show AI Vision (Debug)" Checked="Setting_Changed" Unchecked="Setting_Changed" Margin="0,0,0,5"/>
+                                    <Button x:Name="btnShowVision" Content="OPEN VISION DEBUG" Width="200" Height="30" Background="#2D5016" Foreground="Lime" FontWeight="Bold" Margin="0,0,0,10" Click="BtnShowVision_Click"/>
+                                    <CheckBox x:Name="chkDrawFov" Content="Draw FOV Overlay" Checked="Setting_Changed" Unchecked="Setting_Changed" Margin="0,0,0,15"/>
+
+                                    <Separator Background="#444" Margin="0,0,0,15"/>
+
+                                    <TextBlock Text="AI MODEL" Foreground="#AAA" FontWeight="Bold" Margin="0,0,0,10"/>
+                                    <Grid Margin="0,0,0,15">
+                                        <TextBox x:Name="txtModelPath" Text="best.onnx" Width="250" HorizontalAlignment="Left" Background="#333" Foreground="#AAA" BorderThickness="0" Padding="3" IsReadOnly="True"/>
+                                        <Button x:Name="btnLoadModel" Content="LOAD MODEL" Width="100" Height="28" HorizontalAlignment="Right" Background="{DynamicResource AccentColor}" Foreground="Black" FontWeight="Bold" Click="BtnLoadModel_Click"/>
+                                    </Grid>
+
+                                    <Separator Background="#444" Margin="0,0,0,15"/>
+
+                                    <TextBlock Text="GPU EXECUTION PROVIDER" Foreground="#AAA" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                                    <Grid Margin="0,5,0,10">
+                                        <TextBlock Text="Provider:" VerticalAlignment="Center" Foreground="White"/>
+                                        <ComboBox x:Name="comboGpuProvider" Width="180" HorizontalAlignment="Right" SelectionChanged="ComboGpuProvider_SelectionChanged">
+                                            <ComboBoxItem Content="DirectML (AMD / NVIDIA / Intel — Universal)" />
+                                            <ComboBoxItem Content="TensorRT (NVIDIA Only — Fastest)" />
+                                            <ComboBoxItem Content="CUDA (NVIDIA Only — Fallback)" />
+                                        </ComboBox>
+                                    </Grid>
+
+                                    <TextBlock x:Name="txtGpuWarning" Visibility="Collapsed" Foreground="#FFAA00" FontWeight="Bold" FontSize="11" Margin="0,0,0,10" TextWrapping="Wrap" Text="⚠ NVIDIA GPU required — AMD/Intel GPUs are NOT compatible with this provider. Use DirectML instead."/>
+
+                                    <Grid Margin="0,5,0,10">
+                                        <CheckBox x:Name="chkInt8" Content="INT8 Quantization (Faster, slightly less accurate)" Foreground="White" Checked="Setting_Changed" Unchecked="Setting_Changed" VerticalAlignment="Center"/>
+                                        <Button x:Name="btnConvertInt8" Content="CONVERT MODEL TO INT8" Width="160" Height="28" HorizontalAlignment="Right" Background="#333" Foreground="White" FontWeight="Bold" Click="BtnConvertInt8_Click"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,5,0,10">
+                                        <TextBlock Text="Target FPS:" VerticalAlignment="Center" Foreground="White" FontWeight="SemiBold"/>
+                                        <Slider x:Name="sldTargetFps" Minimum="30" Maximum="500" Value="143" ValueChanged="Slider_Changed" Margin="0,0,60,0"/>
+                                        <TextBox x:Name="txtTargetFps" Text="143" TextChanged="Setting_Changed" Width="45" HorizontalAlignment="Right" Background="#333" Foreground="Lime" FontWeight="Bold" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <Separator Background="#444" Margin="0,0,0,15"/>
+
+                                    <TextBlock Text="TARGETING &amp; BONES" Foreground="#AAA" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                                    <Grid Margin="0,5,0,15">
+                                        <!-- Tradução aqui -->
+                                        <TextBlock Text="Aim Target (Where it locks):" VerticalAlignment="Center" Foreground="White"/>
+                                        <ComboBox x:Name="comboOsso" SelectedIndex="0" Width="150" HorizontalAlignment="Right" SelectionChanged="Setting_Changed">
+                                            <ComboBoxItem Content="Chest (Safer)" />
+                                            <ComboBoxItem Content="Head (Lethal)" />
+                                        </ComboBox>
+                                    </Grid>
+
+                                    <TextBlock Text="AI Confidence Threshold (%):" Foreground="White" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                                    <Grid Margin="0,0,0,15">
+                                        <Slider x:Name="sldConfianca" Minimum="1" Maximum="100" Value="45" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtConfianca" Text="45" TextChanged="Setting_Changed" Width="40" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <Separator Background="#444" Margin="0,0,0,15"/>
+
+                                    <TextBlock Text="PLAYSTYLES &amp; MODES" Foreground="#AAA" FontWeight="Bold" Margin="0,0,0,10"/>
+                                    <!-- Tradução aqui -->
+                                    <CheckBox x:Name="chkTriggerbot" Content="Triggerbot (Auto Fire on Target)" Foreground="White" Margin="0,0,0,5" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                    <CheckBox x:Name="chkQuickScope" Content="Aim Spam (Spams ADS while firing)" Foreground="White" Margin="0,0,0,5" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                    <Grid Margin="0,0,0,15">
+                                        <Slider x:Name="sldAimSpam" Minimum="20" Maximum="500" Value="150" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAimSpam" Text="150" TextChanged="Setting_Changed" Width="40" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+                                    <!-- Tradução aqui -->
+                                    <CheckBox x:Name="chkSmartRecoil" Content="Smart Recoil (Disables recoil while tracking)" Foreground="White" Margin="0,0,0,5" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                    <CheckBox x:Name="chkRageMode" Content="RAGE MODE (0 Input Lag / InstaSweep) ⚠️" Foreground="#FF3333" FontWeight="Bold" Margin="0,0,0,15" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+
+                                    <!-- Tradução aqui -->
+                                    <TextBlock Text="Aimbot Smoothness (Legit Mode Only):" Foreground="White" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                                    <Grid Margin="0,0,0,15">
+                                        <Slider x:Name="sldAISmooth" Minimum="0.01" Maximum="3.0" Value="0.1" TickFrequency="0.1" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAISmooth" Text="0.8" TextChanged="Setting_Changed" Width="40" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <TextBlock Text="Aimbot Pull Strength (Force):" Foreground="White" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                                    <Grid Margin="0,0,0,15">
+                                        <Slider x:Name="sldAimForce" Minimum="0.1" Maximum="10.0" Value="1.0" TickFrequency="0.1" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAimForce" Text="1.0" TextChanged="Setting_Changed" Width="40" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <TextBlock Text="AI Kp:" Foreground="#999" Margin="0,0,0,5" FontSize="11"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Slider x:Name="sldAimKp" Minimum="0.1" Maximum="5.0" Value="1.0" TickFrequency="0.1" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAimKp" Text="1.0" TextChanged="Setting_Changed" Width="40" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <TextBlock Text="AI Ki:" Foreground="#999" Margin="0,0,0,5" FontSize="11"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Slider x:Name="sldAimKi" Minimum="0.0" Maximum="0.05" Value="0.004" TickFrequency="0.001" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAimKi" Text="0.004" TextChanged="Setting_Changed" Width="50" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <TextBlock Text="AI Kd:" Foreground="#999" Margin="0,0,0,5" FontSize="11"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Slider x:Name="sldAimKd" Minimum="0.0" Maximum="1.0" Value="0.15" TickFrequency="0.01" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAimKd" Text="0.15" TextChanged="Setting_Changed" Width="40" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <TextBlock Text="Filter Alpha:" Foreground="#999" Margin="0,0,0,5" FontSize="11"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Slider x:Name="sldAimAlpha" Minimum="0.0" Maximum="1.0" Value="0.35" TickFrequency="0.01" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAimAlpha" Text="0.35" TextChanged="Setting_Changed" Width="40" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <TextBlock Text="Integral Clamp:" Foreground="#999" Margin="0,0,0,5" FontSize="11"/>
+                                    <Grid Margin="0,0,0,10">
+                                        <Slider x:Name="sldAimIClamp" Minimum="0" Maximum="20000" Value="5000" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAimIClamp" Text="5000" TextChanged="Setting_Changed" Width="50" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <TextBlock Text="Micro Deadzone:" Foreground="#999" Margin="0,0,0,5" FontSize="11"/>
+                                    <Grid Margin="0,0,0,15">
+                                        <Slider x:Name="sldAimDead" Minimum="0.0" Maximum="5.0" Value="0.5" TickFrequency="0.1" ValueChanged="Slider_Changed" Margin="0,0,50,0"/>
+                                        <TextBox x:Name="txtAimDead" Text="0.5" TextChanged="Setting_Changed" Width="40" HorizontalAlignment="Right" Background="#333" Foreground="White" BorderThickness="0" Padding="2"/>
+                                    </Grid>
+
+                                    <Separator Background="#444" Margin="0,0,0,15"/>
+
+                                    <TextBlock Text="FIELD OF VIEW (FOV)" Foreground="#AAA" FontWeight="Bold" Margin="0,0,0,10"/>
+                                    <Grid Margin="0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition/>
+                                            <ColumnDefinition/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                            <TextBlock Text="Width:" Foreground="White"/>
+                                            <Slider x:Name="sldFovW" Minimum="50" Maximum="800" Value="300" ValueChanged="Slider_Changed"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Height:" Foreground="White"/>
+                                            <Slider x:Name="sldFovH" Minimum="50" Maximum="800" Value="150" ValueChanged="Slider_Changed"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Separator Background="#444" Margin="0,15,0,10"/>
+
+                                    <TextBlock Text="SYSTEM LOG" Foreground="{DynamicResource AccentColor}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                    <Grid Margin="0,0,0,5">
+                                        <Border x:Name="LogBorder" Background="#111" CornerRadius="4" BorderBrush="#333" BorderThickness="1" Height="120">
+                                            <ScrollViewer x:Name="LogScroller" VerticalScrollBarVisibility="Auto">
+                                                <TextBlock x:Name="txtLogBox" Text="Waiting..." Foreground="#0F0" FontFamily="Consolas" FontSize="10" Padding="8" TextWrapping="Wrap"/>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Grid>
+                                    <Grid Margin="0,5,0,0">
+                                        <TextBlock x:Name="txtFpsDisplay" Text="FPS: --" Foreground="Lime" FontWeight="Bold" FontFamily="Consolas" FontSize="14" VerticalAlignment="Center"/>
+                                        <Button x:Name="btnClearLog" Content="CLEAR LOG" Width="80" HorizontalAlignment="Right" Background="#333" Foreground="White" FontWeight="Bold" FontSize="10" Click="BtnClearLog_Click"/>
+                                    </Grid>
+
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
                 </TabItem>
             </TabControl>
 
@@ -418,7 +540,6 @@
                     <Border Background="#222" CornerRadius="4" Padding="8,2" Margin="15,0,0,0">
                         <TextBlock x:Name="lblTimer" Text="Checking License..." Foreground="#00E676" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
                     </Border>
-                    <Button Content="UPDATE LOG" Click="BtnUpdateLog_Click" Height="26" Width="110" Margin="14,0,0,0" Background="#262626" Foreground="White" BorderBrush="#3A3A3A" BorderThickness="1" FontWeight="Bold" FontSize="11"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,5,0" WindowChrome.IsHitTestVisibleInChrome="True">
                     <Button Content="_" Click="Hide_Click" Width="40" Background="Transparent" Foreground="#AAA" BorderThickness="0"/>
@@ -434,7 +555,7 @@
                     <Button x:Name="navMacros" Content="MACROS" Click="Nav_Macro_Click" Style="{StaticResource NavBtnStyle}"/>
                     <Button x:Name="navProfiles" Content="PROFILES" Click="Nav_Profiles_Click" Style="{StaticResource NavBtnStyle}"/>
                     <Button x:Name="navThemes" Content="THEMES" Click="Nav_Themes_Click" Style="{StaticResource NavBtnStyle}"/>
-                    <Button x:Name="navIA" Content="NEW FEATURES" Click="Nav_IA_Click" Style="{StaticResource NavBtnStyle}" Width="150"/>
+                    <Button x:Name="navIA" Content="IA" Click="Nav_IA_Click" Style="{StaticResource NavBtnStyle}"/>
                 </StackPanel>
             </Border>
         </Grid>

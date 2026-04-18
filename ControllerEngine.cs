@@ -23,22 +23,6 @@ namespace emu2026
         private static volatile bool macroYState = false;
         private static bool autoPingActive = false;
         private static long autoPingStartTime = 0;
-        private static long lastDropAllMoneyTime = 0;
-        private static DropAllMoneyMacroState dropAllMoneyMacroState = DropAllMoneyMacroState.Idle;
-        private static long dropAllMoneyNextStepAt = 0;
-        private const int DropAllMoneyButtonHoldMs = 80;
-        private System.Windows.Forms.Form inputMessageWindow;
-
-        private enum DropAllMoneyMacroState
-        {
-            Idle,
-            OpeningBackpackPress,
-            OpeningBackpackRelease,
-            DroppingMoneyPress,
-            DroppingMoneyRelease,
-            ClosingBackpackPress,
-            ClosingBackpackRelease
-        }
 
         public void SetupController()
         {
@@ -54,84 +38,10 @@ namespace emu2026
 
         static double ApplyCurve(double v, double s, double c) { double sign = v >= 0 ? 1.0 : -1.0; v = Math.Abs(v); v = Math.Pow(v, c) * s; return sign * v; }
         private bool IsKey(int k) { return (RawInputAPI.GetAsyncKeyState(k) & 0x8000) != 0; }
-        private bool IsBindPressed(int bindCode)
-        {
-            return bindCode switch
-            {
-                0x01 => SharedState.rawLMB || IsKey(bindCode),
-                0x02 => SharedState.rawRMB || IsKey(bindCode),
-                0x04 => SharedState.rawMMB || IsKey(bindCode),
-                0x05 => SharedState.rawX1 || IsKey(bindCode),
-                0x06 => SharedState.rawX2 || IsKey(bindCode),
-                _ => IsKey(bindCode)
-            };
-        }
         static void LockMouse(int cx, int cy) { RawInputAPI.RECT r = new RawInputAPI.RECT(); r.Left = cx; r.Top = cy; r.Right = cx + 1; r.Bottom = cy + 1; RawInputAPI.ClipCursor(ref r); }
         static void UnlockMouse() { RawInputAPI.ClipCursor(IntPtr.Zero); }
 
-        private void StartDropAllMoneyMacro(long now)
-        {
-            if (dropAllMoneyMacroState != DropAllMoneyMacroState.Idle || activeConfig.KeyDropAllMoney == 0)
-            {
-                return;
-            }
-
-            dropAllMoneyMacroState = DropAllMoneyMacroState.OpeningBackpackPress;
-            dropAllMoneyNextStepAt = now;
-            lastDropAllMoneyTime = now;
-        }
-
-        private void UpdateDropAllMoneyMacro(long now, ref bool jump, ref bool crouch, ref bool reload, ref bool swap, ref bool tact, ref bool leth, ref bool sprint, ref bool melee, ref bool ping, ref bool firemode, ref bool killstreak, ref bool backpack, ref bool map, ref bool menu)
-        {
-            if (dropAllMoneyMacroState == DropAllMoneyMacroState.Idle || now < dropAllMoneyNextStepAt)
-            {
-                return;
-            }
-
-            switch (dropAllMoneyMacroState)
-            {
-                case DropAllMoneyMacroState.OpeningBackpackPress:
-                    backpack = true;
-                    dropAllMoneyMacroState = DropAllMoneyMacroState.OpeningBackpackRelease;
-                    dropAllMoneyNextStepAt = now + DropAllMoneyButtonHoldMs;
-                    break;
-
-                case DropAllMoneyMacroState.OpeningBackpackRelease:
-                    dropAllMoneyMacroState = DropAllMoneyMacroState.DroppingMoneyPress;
-                    dropAllMoneyNextStepAt = now + Math.Max(50, activeConfig.DropAllMoneyOpenDelayMs);
-                    break;
-
-                case DropAllMoneyMacroState.DroppingMoneyPress:
-                    swap = true;
-                    dropAllMoneyMacroState = DropAllMoneyMacroState.DroppingMoneyRelease;
-                    dropAllMoneyNextStepAt = now + DropAllMoneyButtonHoldMs;
-                    break;
-
-                case DropAllMoneyMacroState.DroppingMoneyRelease:
-                    dropAllMoneyMacroState = DropAllMoneyMacroState.ClosingBackpackPress;
-                    dropAllMoneyNextStepAt = now + Math.Max(50, activeConfig.DropAllMoneyActionDelayMs);
-                    break;
-
-                case DropAllMoneyMacroState.ClosingBackpackPress:
-                    crouch = true;
-                    dropAllMoneyMacroState = DropAllMoneyMacroState.ClosingBackpackRelease;
-                    dropAllMoneyNextStepAt = now + DropAllMoneyButtonHoldMs;
-                    break;
-
-                case DropAllMoneyMacroState.ClosingBackpackRelease:
-                    dropAllMoneyMacroState = DropAllMoneyMacroState.Idle;
-                    dropAllMoneyNextStepAt = now + Math.Max(50, activeConfig.DropAllMoneyCloseDelayMs);
-                    break;
-            }
-        }
-
-        private void InputListenerWorker()
-        {
-            var w = new InputMessageWindow();
-            inputMessageWindow = w;
-            RegisterRawInput(w.Handle);
-            System.Windows.Forms.Application.Run(w);
-        }
+        private void InputListenerWorker() { var w = new InputMessageWindow(); RegisterRawInput(w.Handle); System.Windows.Forms.Application.Run(w); }
 
         static void RegisterRawInput(IntPtr h)
         {
@@ -169,18 +79,6 @@ namespace emu2026
                                 if ((raw.mouse.usButtonFlags & 0x0002) != 0) SharedState.rawLMB = false;
                                 if ((raw.mouse.usButtonFlags & 0x0004) != 0) SharedState.rawRMB = true;
                                 if ((raw.mouse.usButtonFlags & 0x0008) != 0) SharedState.rawRMB = false;
-                                if ((raw.mouse.usButtonFlags & 0x0010) != 0) SharedState.rawMMB = true;
-                                if ((raw.mouse.usButtonFlags & 0x0020) != 0) SharedState.rawMMB = false;
-                                if ((raw.mouse.usButtonFlags & 0x0080) != 0)
-                                {
-                                    if (raw.mouse.usButtonData == 1) SharedState.rawX1 = true;
-                                    if (raw.mouse.usButtonData == 2) SharedState.rawX2 = true;
-                                }
-                                if ((raw.mouse.usButtonFlags & 0x0100) != 0)
-                                {
-                                    if (raw.mouse.usButtonData == 1) SharedState.rawX1 = false;
-                                    if (raw.mouse.usButtonData == 2) SharedState.rawX2 = false;
-                                }
                             }
                         }
                         Marshal.FreeHGlobal(pData);
@@ -297,29 +195,21 @@ namespace emu2026
                 residualY = finalY - tY;
 
                 // 1. LEITURA DOS BOTÕES FÍSICOS
-                long now = stopwatch.ElapsedMilliseconds;
-
-                bool aim = IsBindPressed(activeConfig.KeyAim);
-                bool sht = IsBindPressed(activeConfig.KeyShoot);
-                bool tact = IsBindPressed(activeConfig.KeyTactical);
-                bool jump = IsBindPressed(activeConfig.KeyJump);
-                bool crouch = IsBindPressed(activeConfig.KeyCrouch);
-                bool reload = IsBindPressed(activeConfig.KeyReload);
-                bool swap = IsBindPressed(activeConfig.KeySwap);
-                bool leth = IsBindPressed(activeConfig.KeyLethal);
-                bool sprint = IsBindPressed(activeConfig.KeySprint);
-                bool melee = IsBindPressed(activeConfig.KeyMelee);
-                bool firemode = IsBindPressed(activeConfig.KeyFireMode);
-                bool killstreak = IsBindPressed(activeConfig.KeyKillstreak);
-                bool backpack = IsBindPressed(activeConfig.KeyBackpack);
-                bool map = IsBindPressed(activeConfig.KeyMap);
-                bool menu = IsBindPressed(activeConfig.KeyMenu);
-                bool dropAllMoneyPressed = IsBindPressed(activeConfig.KeyDropAllMoney);
-
-                if (dropAllMoneyPressed && now - lastDropAllMoneyTime > 700)
-                {
-                    StartDropAllMoneyMacro(now);
-                }
+                bool aim = IsKey(activeConfig.KeyAim);
+                bool sht = IsKey(activeConfig.KeyShoot);
+                bool tact = IsKey(activeConfig.KeyTactical);
+                bool jump = IsKey(activeConfig.KeyJump);
+                bool crouch = IsKey(activeConfig.KeyCrouch);
+                bool reload = IsKey(activeConfig.KeyReload);
+                bool swap = IsKey(activeConfig.KeySwap);
+                bool leth = IsKey(activeConfig.KeyLethal);
+                bool sprint = IsKey(activeConfig.KeySprint);
+                bool melee = IsKey(activeConfig.KeyMelee);
+                bool firemode = IsKey(activeConfig.KeyFireMode);
+                bool killstreak = IsKey(activeConfig.KeyKillstreak);
+                bool backpack = IsKey(activeConfig.KeyBackpack);
+                bool map = IsKey(activeConfig.KeyMap);
+                bool menu = IsKey(activeConfig.KeyMenu);
 
                 // --- SOLUÇÃO: DECLARAR VARIÁVEIS DA IA ANTES DE SEREM USADAS ---
                 int aiX = 0;
@@ -345,7 +235,7 @@ namespace emu2026
                 if (currentShoot && !wasShooting) burstStartTime = stopwatch.ElapsedMilliseconds;
 
                 // 4. MACRO: AUTO PING — mantem o ping por 200ms ao começar a atirar
-                bool ping = IsBindPressed(activeConfig.KeyPing);
+                bool ping = IsKey(activeConfig.KeyPing);
                 if (activeConfig.AutoPingEnabled)
                 {
                     if (currentShoot && !wasShooting)
@@ -373,7 +263,7 @@ namespace emu2026
                 }
 
                 // 5. MACRO: YY (Spam de Troca de Arma)
-                if (activeConfig.YYEnabled && activeConfig.KeyYY != 0 && IsBindPressed(activeConfig.KeyYY))
+                if (activeConfig.YYEnabled && activeConfig.KeyYY != 0 && IsKey(activeConfig.KeyYY))
                 {
                     macroYState = (stopwatch.ElapsedMilliseconds % activeConfig.YYDelay) < (activeConfig.YYDelay / 2);
                 }
@@ -381,8 +271,6 @@ namespace emu2026
                 {
                     macroYState = false;
                 }
-
-                UpdateDropAllMoneyMacro(now, ref jump, ref crouch, ref reload, ref swap, ref tact, ref leth, ref sprint, ref melee, ref ping, ref firemode, ref killstreak, ref backpack, ref map, ref menu);
 
                 // --- LEITURA DA FILA DO AIMBOT (Comunicação com a IA) ---
                 lock (SharedState.aimLock)
@@ -514,7 +402,7 @@ namespace emu2026
 
                 // 7. MACRO: ROTATIONAL ASSIST (Aplicado no Analógico Esquerdo / Boneco)
                 // SO ativa se o jogador NAO estiver a mover (WASD inativo)
-                bool playerMoving = IsBindPressed(0x57) || IsBindPressed(0x41) || IsBindPressed(0x53) || IsBindPressed(0x44); // W, A, S, D
+                bool playerMoving = IsKey(0x57) || IsKey(0x41) || IsKey(0x53) || IsKey(0x44); // W, A, S, D
                 if (activeConfig.RotationalAssist && isAimingFisico && !playerMoving)
                 {
                     double rotTime = stopwatch.ElapsedMilliseconds;

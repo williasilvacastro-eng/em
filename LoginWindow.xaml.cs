@@ -8,8 +8,9 @@
 using System;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Principal;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -21,50 +22,33 @@ namespace emu2026
     {
         private static readonly HttpClient client = new HttpClient();
         private const string KeyFilePath = "key.dat";
-
-        private bool environmentReady;
-        private bool environmentCheckInProgress;
-        private bool autoLoginTriggered;
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public LoginWindow()
         {
             InitializeComponent();
         }
 
-        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            bool ready = await EnsureEnvironmentReadyAsync();
-            if (!ready || !IsLoaded)
+            if (File.Exists(KeyFilePath))
             {
-                return;
-            }
-
-            string savedKey = ProtectedStorage.LoadUserSecret(KeyFilePath)?.Trim();
-            if (!string.IsNullOrEmpty(savedKey))
-            {
-                txtKey.Text = savedKey;
-                autoLoginTriggered = true;
-                BtnLogin_Click(null, null);
+                string savedKey = File.ReadAllText(KeyFilePath).Trim();
+                if (!string.IsNullOrEmpty(savedKey))
+                {
+                    txtKey.Text = savedKey;
+                    BtnLogin_Click(null, null);
+                }
             }
         }
 
         private async void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
-            if (environmentCheckInProgress)
-            {
-                return;
-            }
-
-            if (!environmentReady)
-            {
-                bool ready = await EnsureEnvironmentReadyAsync();
-                if (!ready)
-                {
-                    return;
-                }
-            }
-
             string chaveCliente = txtKey.Text?.Trim();
+
             if (string.IsNullOrEmpty(chaveCliente))
             {
                 System.Windows.MessageBox.Show("Please enter a valid License Key!", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -73,57 +57,47 @@ namespace emu2026
 
             try
             {
-                string firebaseUrl = ProtectedConfig.FirebaseUrl;
-                string urlDoBanco = $"{firebaseUrl}/licenses/{chaveCliente}.json";
-                HttpResponseMessage resposta = await client.GetAsync(urlDoBanco);
-                resposta.EnsureSuccessStatusCode();
-
-                string corpoDaResposta = await resposta.Content.ReadAsStringAsync();
-                if (corpoDaResposta == "null")
-                {
-                    System.Windows.MessageBox.Show("Invalid or non-existent Key!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    ProtectedStorage.DeleteSecret(KeyFilePath);
-                    return;
-                }
-
-                LicenseData dadosDaKey = JsonSerializer.Deserialize<LicenseData>(corpoDaResposta);
                 string hwidAtual = WindowsIdentity.GetCurrent()?.User?.Value ?? "UNKNOWN_HWID";
-                bool isLifetime = dadosDaKey.duration_days == 9999;
+                LicenseValidationResponse dadosDaKey = await ValidarLicencaAsync(chaveCliente, hwidAtual);
 
-                if (string.IsNullOrEmpty(dadosDaKey.hwid))
+                if (dadosDaKey == null || !dadosDaKey.valid)
                 {
-                    dadosDaKey.hwid = hwidAtual;
-                    dadosDaKey.is_used = true;
-                    dadosDaKey.activation_date = DateTime.Now.ToString("dd/MM/yyyy");
+                    MostrarErroLicenca(dadosDaKey);
+                    if (File.Exists(KeyFilePath))
+                    {
+                        File.Delete(KeyFilePath);
+                    }
 
-                    string jsonAtualizado = JsonSerializer.Serialize(dadosDaKey);
-                    var conteudo = new StringContent(jsonAtualizado, Encoding.UTF8, "application/json");
-                    await client.PutAsync(urlDoBanco, conteudo);
-
-                    System.Windows.MessageBox.Show("Key successfully activated and linked to this PC!", "Activation Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else if (dadosDaKey.hwid != hwidAtual)
-                {
-                    System.Windows.MessageBox.Show("Access Denied: This Key is already linked to another computer!", "HWID Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    ProtectedStorage.DeleteSecret(KeyFilePath);
                     return;
                 }
 
-                DateTime dataExpiracao = DateTime.MaxValue;
-                if (!isLifetime)
+                DateTime dataExpiracao = DateTime.SpecifyKind(DateTime.MaxValue, DateTimeKind.Utc);
+                if (!string.IsNullOrWhiteSpace(dadosDaKey.expires_at))
                 {
-                    DateTime dataAtivacao = DateTime.ParseExact(dadosDaKey.activation_date, "dd/MM/yyyy", null);
-                    dataExpiracao = dataAtivacao.AddDays(dadosDaKey.duration_days);
-
-                    if (DateTime.Now > dataExpiracao)
+                    if (!DateTimeOffset.TryParse(
+                        dadosDaKey.expires_at,
+                        null,
+                        System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+                        out var expirationOffset))
                     {
-                        System.Windows.MessageBox.Show($"Access Denied: This Key expired on {dataExpiracao:MM/dd/yyyy}.", "License Expired", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        ProtectedStorage.DeleteSecret(KeyFilePath);
+                        System.Windows.MessageBox.Show("Access Denied: Invalid expiration date on license.", "License Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        if (File.Exists(KeyFilePath))
+                        {
+                            File.Delete(KeyFilePath);
+                        }
+
                         return;
                     }
+
+                    dataExpiracao = expirationOffset.UtcDateTime;
                 }
 
-                ProtectedStorage.SaveUserSecret(KeyFilePath, chaveCliente);
+                if (dadosDaKey.first_activation)
+                {
+                    System.Windows.MessageBox.Show("Key successfully activated and linked to this PC!", "Activation Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+
+                File.WriteAllText(KeyFilePath, chaveCliente);
 
                 MainWindow mainWindow = new MainWindow(dataExpiracao);
                 mainWindow.Show();
@@ -135,90 +109,7 @@ namespace emu2026
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show("Error communicating with the database: " + ex.Message, "Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task<bool> EnsureEnvironmentReadyAsync()
-        {
-            if (environmentReady)
-            {
-                return true;
-            }
-
-            environmentCheckInProgress = true;
-            SetLoadingState(true, "Checking ViGEmBus and Interception...");
-
-            try
-            {
-                var result = await DependencyInstaller.EnsureDependenciesAsync(UpdateDependencyStatus);
-                if (result.RelaunchStarted)
-                {
-                    System.Windows.Application.Current.Shutdown();
-                    return false;
-                }
-
-                if (!result.Success)
-                {
-                    SetLoadingState(false, result.Message);
-                    System.Windows.MessageBox.Show(result.Message, "Driver Installation", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return false;
-                }
-
-                environmentReady = true;
-                SetLoadingState(false, result.Message);
-
-                if (result.InstalledAnyDependency)
-                {
-                    System.Windows.MessageBox.Show(result.Message, "Driver Installation", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                SetLoadingState(false, "Failed to prepare emulator dependencies.");
-                System.Windows.MessageBox.Show("Failed to prepare emulator dependencies: " + ex.Message, "Driver Installation", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-            finally
-            {
-                environmentCheckInProgress = false;
-                btnLogin.IsEnabled = environmentReady;
-            }
-        }
-
-        private void UpdateDependencyStatus(string status)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (txtDependencyStatus != null)
-                {
-                    txtDependencyStatus.Text = status;
-                }
-
-                if (txtLoadingStatus != null)
-                {
-                    txtLoadingStatus.Text = status;
-                }
-            });
-        }
-
-        private void SetLoadingState(bool isLoading, string status)
-        {
-            UpdateDependencyStatus(status);
-
-            LoginPanel.Visibility = isLoading ? Visibility.Collapsed : Visibility.Visible;
-            LoadingPanel.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
-
-            if (btnLogin != null)
-            {
-                btnLogin.IsEnabled = !isLoading && environmentReady;
-            }
-
-            if (!isLoading && autoLoginTriggered && !environmentReady)
-            {
-                autoLoginTriggered = false;
+                System.Windows.MessageBox.Show("Error communicating with Supabase: " + ex.Message, "Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -235,15 +126,6 @@ namespace emu2026
             System.Windows.Application.Current.Shutdown();
         }
 
-        private void BtnUpdateLog_Click(object sender, RoutedEventArgs e)
-        {
-            var updateLogWindow = new UpdateLogWindow
-            {
-                Owner = this
-            };
-            updateLogWindow.ShowDialog();
-        }
-
         private void TxtHWID_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             try
@@ -252,16 +134,94 @@ namespace emu2026
                 System.Windows.Clipboard.SetText(hwid);
                 System.Windows.MessageBox.Show("HWID copied to clipboard!", "Copied", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            catch { }
+            catch
+            {
+            }
+        }
+
+        private static async Task<LicenseValidationResponse> ValidarLicencaAsync(string chaveCliente, string hwidAtual)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, ProtectedConfig.SupabaseFunctionUrl);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            if (!string.IsNullOrWhiteSpace(ProtectedConfig.SupabaseAnonKey) &&
+                !string.Equals(ProtectedConfig.SupabaseAnonKey, "SUA_ANON_KEY_AQUI", StringComparison.Ordinal))
+            {
+                request.Headers.Add("apikey", ProtectedConfig.SupabaseAnonKey);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ProtectedConfig.SupabaseAnonKey);
+            }
+
+            request.Content = JsonContent.Create(new LicenseValidationRequest
+            {
+                license_key = chaveCliente,
+                hwid = hwidAtual
+            });
+
+            HttpResponseMessage resposta = await client.SendAsync(request);
+            string corpo = await resposta.Content.ReadAsStringAsync();
+
+            if (string.IsNullOrWhiteSpace(corpo))
+            {
+                resposta.EnsureSuccessStatusCode();
+                return null;
+            }
+
+            LicenseValidationResponse resultado = JsonSerializer.Deserialize<LicenseValidationResponse>(corpo, JsonOptions);
+
+            if (!resposta.IsSuccessStatusCode && resultado == null)
+            {
+                resposta.EnsureSuccessStatusCode();
+            }
+
+            return resultado;
+        }
+
+        private static void MostrarErroLicenca(LicenseValidationResponse resposta)
+        {
+            string erro = resposta?.error ?? string.Empty;
+            string status = resposta?.status ?? string.Empty;
+
+            if (string.Equals(erro, "hwid_mismatch", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "hwid_mismatch", StringComparison.OrdinalIgnoreCase))
+            {
+                System.Windows.MessageBox.Show("Access Denied: This Key is already linked to another computer!", "HWID Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (string.Equals(erro, "expired_key", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "expired", StringComparison.OrdinalIgnoreCase))
+            {
+                System.Windows.MessageBox.Show("Access Denied: This Key has expired.", "License Expired", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.Equals(erro, "inactive_key", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "inactive", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "blocked", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "revoked", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "invalid", StringComparison.OrdinalIgnoreCase))
+            {
+                System.Windows.MessageBox.Show("Access Denied: This Key is not active.", "License Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            System.Windows.MessageBox.Show("Invalid or non-existent Key!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
-    public class LicenseData
+    public class LicenseValidationRequest
     {
-        public int duration_days { get; set; }
-        public bool is_used { get; set; }
-        public string type { get; set; } = "temporary";
+        public string license_key { get; set; } = "";
         public string hwid { get; set; } = "";
-        public string activation_date { get; set; } = "";
+    }
+
+    public class LicenseValidationResponse
+    {
+        public bool valid { get; set; }
+        public string status { get; set; } = "";
+        public string expires_at { get; set; } = "";
+        public string error { get; set; } = "";
+        public bool first_activation { get; set; }
+        public string user_id { get; set; } = "";
     }
 }
